@@ -8,7 +8,8 @@ import torch.nn as nn
 
 from pathlib import Path
 from collections import defaultdict
-from data import Tokenizer, load_data, BCRDataset, collate_fn
+#from protein_transformer.data import Tokenizer, load_data, BCRDataset, collate_fn
+from data import Tokenizer, load_data, BCRDataset, collate_fn # Notice the leading dot (.)
 from model import AntibodyClassifier
 from utils import set_seeds, get_device
 from typing_extensions import Annotated
@@ -20,11 +21,7 @@ from sklearn.metrics import (
     precision_recall_fscore_support,
 )
 
-
-# create a typer app
-app = typer.Typer()
-
-
+# ... (all your other functions: get_dataloaders, train_epoch, val_epoch) ...
 def get_dataloaders(df, val_size, tokenizer, device, batch_size):
     df_train, df_val = train_test_split(
         df, stratify=df["label"], random_state=0, test_size=val_size
@@ -147,12 +144,14 @@ def val_epoch(
     )
 
 
-@app.command()
-def train_model(
+
+
+def main(
     run_id: Annotated[str, typer.Option(help="Name for the training run ID")],
     dataset_loc: Annotated[
         str, typer.Option(help="Path to the dataset in parquet format")
     ],
+    # ... (all the other arguments from train_model) ...
     val_size: Annotated[
         float, typer.Option(help="Proportion of the dataset to use for validation")
     ] = 0.15,
@@ -189,27 +188,8 @@ def train_model(
 ) -> None:
     """
     Trains a classification model using a Transformer architecture.
-
-    Args:
-        run_id (str): Name for the training run ID.
-        dataset_loc (str): Path to the dataset in parquet format.
-        val_size (float, optional): Proportion of the dataset to use for validation. Defaults to 0.15.
-        embedding_dim (int, optional): Dimensionality of token embeddings. Defaults to 64.
-        num_layers (int, optional): Number of Transformer encoder layers. Defaults to 8.
-        num_heads (int, optional): Number of attention heads in the encoder. Defaults to 2.
-        ffn_dim (int, optional): Dimensionality of the feed-forward layer in the encoder. Defaults to 128.
-        dropout (float, optional): Dropout probability for regularization. Defaults to 0.05.
-        num_classes (int, optional): Number of final output dimensions. Defaults to 2 (binary classification).
-        batch_size (int, optional): Number of samples per batch for each worker. Defaults to 32.
-        lr (float, optional): The learning rate for the optimizer. Defaults to 2e-5.
-        num_epochs (int, optional): Number of epochs for training. Defaults to 20.
-        verbose (bool, optional): Whether to print verbose training messages. Defaults to True.
-        output_dir (str): Path to save the best model and training results.
-
-    Returns:
-        None
     """
-
+    # (Paste the entire code body of the original train_model function here)
     # create a directory to save the model
     save_path = Path(f"{output_dir}/{run_id}")
     if not save_path.exists():
@@ -304,8 +284,8 @@ def train_model(
     # Save training results as CSV
     results = pd.DataFrame(results)
     results.to_csv(save_path / "results.csv", index=False)
-
+    
 
 if __name__ == "__main__":
     set_seeds()
-    app()
+    typer.run(main)
